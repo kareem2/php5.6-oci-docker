@@ -26,8 +26,11 @@ RUN echo "<?php phpinfo();" > /var/www/html/index.php
 RUN rm -f /var/www/html/index.html
 
 
-COPY ./oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm /oracle/
-COPY ./oracle-instantclient11.2-devel-11.2.0.4.0-1.x86_64.rpm /oracle/
+COPY ./oracle-instantclient11.2-basic-11.2.0.4.0-1.x86_64.rpm /opt/oracle/
+COPY ./oracle-instantclient11.2-devel-11.2.0.4.0-1.x86_64.rpm /opt/oracle/
+
+COPY instantclient-basic-linux.x64-11.2.0.4.0.zip /opt/oracle/
+COPY instantclient-sdk-linux.x64-11.2.0.4.0.zip /opt/oracle/
 
 
 
@@ -50,3 +53,43 @@ CMD ["apachectl", "-D", "FOREGROUND"]
 # export ORACLE_HOME=/usr/lib/oracle/11.2/client64
 # export LD_LIBRARY_PATH=$ORACLE_HOME/lib
 # ldconfig
+
+
+pecl install oci8-2.0.10
+
+echo "instantclient,/opt/oracle/instantclient_11_2" | pecl install oci8-2.0.12
+apt-get purge php8.2-common
+apt-get install php5.6-dev php-pear build-essential libaio1
+apt-get install php5.6-dev -y
+
+
+
+
+
+ cd /opt/oracle
+unzip instantclient-basic-linux.x64-11.2.0.4.0.zip
+unzip instantclient-sdk-linux.x64-11.2.0.4.0.zip
+
+ln -s /opt/oracle/instantclient_11_2/libclntsh.so.11.1 /opt/oracle/instantclient_11_2/libclntsh.so
+ln -s /opt/oracle/instantclient_11_2/libocci.so.11.1 /opt/oracle/instantclient_11_2/libocci.so
+
+echo /opt/oracle/instantclient_11_2 > /etc/ld.so.conf.d/oracle-instantclient
+
+apt-get purge php8.2-common
+
+apt-get install php5.6-dev -y
+
+apt-get install libaio1
+
+echo /opt/oracle/instantclient_11_2/ > /etc/ld.so.conf.d/oracle-instantclient.conf
+
+
+echo '/opt/oracle/instantclient_11_2/' | tee -a /etc/ld.so.conf.d/oracle-instantclient.conf
+ldconfig
+
+
+
+echo "instantclient,/opt/oracle/instantclient_11_2" | pecl install oci8-2.0.12
+
+echo "extension = oci8.so" >> /etc/php/5.6/cli/php.ini
+echo "extension = oci8.so" >> /etc/php/5.6/apache2/php.ini
